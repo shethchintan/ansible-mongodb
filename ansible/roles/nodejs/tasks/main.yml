@@ -1,0 +1,58 @@
+---
+- name: Import Remi GPG key.
+  become: yes
+  rpm_key: "key={{ item }} state=present"
+  with_items:
+    - "http://rpms.famillecollet.com/RPM-GPG-KEY-remi"
+
+- name: Install Remi repo.
+  become: yes
+  command: "rpm -Uvh --force {{ item.href }} creates={{ item.creates }}"
+  with_items:
+    - href: "http://rpms.famillecollet.com/enterprise/remi-release-6.rpm"
+      creates: "/etc/yum.repos.d/remi.repo"
+
+- name: Install EPEL repo.
+  become: yes
+  yum: name=epel-release state=present
+
+- name: Ensure firewalld is stopped (since this is a test server).
+  become: yes
+  service: name=firewalld state=stopped
+
+- name: Install Node.js and npm.
+  become: yes
+  yum: name=npm state=present enablerepo=epel
+
+- name: Install Forever (to run our Node.js app).
+  npm: name=forever global=yes state=latest
+  become: yes
+
+- name: Ensure Node.js app folder exists.
+  become: yes
+  file: "path={{ node_apps_location }}/app state=directory"
+
+- name: Copy example Node.js app to server.
+  become: yes
+  copy:
+    dest: /{{ node_apps_location }}/app/app.js
+    src: app.js
+    mode: 0764
+
+- name: Install app dependencies defined in package.json.
+  become: yes
+  copy:
+    dest: /{{ node_apps_location }}/app/package.json
+    src: package.json
+    mode: 0764
+
+- name: Check list of running Node.js apps.
+  command: forever list 
+  args:
+    chdir: /{{ node_apps_location }}/app/
+  register: forever_list
+  changed_when: false
+
+- name: Start example Node.js app.
+  command: "forever start {{ node_apps_location }}/app/app.js"
+  when: "forever_list.stdout.find('{{ node_apps_location }}/app/app.js') == -1"
