@@ -1,20 +1,63 @@
 ---
+- name: Ensure NTP (for time synchronization) is installed.
+  yum: name=ntp state=installed
+
+- name: Ensure NTP is running.
+  service: name=ntpd state=started enabled=yes
+
+- name: Create the hosts file for all machines
+  template: src=hosts.j2 dest=/etc/hosts
+
+- become: yes
+  group: name={{mongodb_user}} state=present
+
+- name: Ensure firewalld is stopped (since this is a test server).
+  become: yes
+  service: name=firewalld state=stopped
+
+- name: Create mongodb user
+  become: yes
+  user: name={{mongodb_user}} group={{mongodb_user}}
 - name: Create repository
   become: yes
   copy: src=mongodb-org-3.2.repo dest=/etc/yum.repos.d/mongodb-org-3.2.repo
-
-- name: Create mongod user
-  become: yes
-  user: name=mongod comment="MongoD"
-
-- name: Create the data directory for the namenode metadata
-  become: yes
-  file: path={{ mongodb_datadir_prefix }} owner=mongod group=mongod state=directory
 
 - name: Install the mongodb package
   become: yes
   yum: name=mongodb-org state=installed
 
-- name: Start mongod service
+- name: Install the mongodb package
   become: yes
-  service: name=mongod enabled=yes
+  yum: name=policycoreutils-python state=installed
+
+#- name: Allow port
+#  become: yes
+#  command: semanage port -a -t mongod_port_t -p tcp {{ mongod_port}}
+
+- name: Configure mongodb
+  become: yes
+  template: src=mongod.conf.j2 dest=/etc/mongod.conf owner=root group=root mode=0644
+
+- name: Confiure database directory
+  become: yes
+  file: state=directory path={{ mongodb_conf_dbpath }} owner={{mongodb_user}} group={{mongodb_user}} mode=0755
+
+- name: Configure log directory
+  become: yes
+  file: state=directory path={{ mongodb_conf_logpath | dirname }} owner={{mongodb_user}} group={{mongodb_user}} mode=0755
+
+#- name: start mongodb
+#  become: yes
+#  service: name={{ mongodb_daemon_name }} enabled=yes
+- name: Copy the keyfile for authentication
+  copy: src=secret dest={{ mongodb_conf_dbpath }}/secret owner=mongod group=mongod mode=0400
+
+- name: Create the file to initialize the mongod ca set
+  template: src=repset_init.j2 dest=/tmp/repset_init.js
+
+- name: Initialize the replication set
+  shell: /usr/bin/mongo 127.0.0.1:27017 /tmp/repset_init.js
+
+- name: Ensure mongodb is started
+  become: yes
+  service: name={{ mongodb_daemon_name }} state=started

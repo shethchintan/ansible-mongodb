@@ -1,2 +1,4 @@
-[role=allhosts]
-localhost ansible_ssh_host=127.0.0.1  ansible_ssh_port=2206
+[mongo_servers]
+mongo2 mongod_port=27017
+mongo3 mongod_port=27017
+mongo4 mongod_port=27017

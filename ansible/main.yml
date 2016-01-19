@@ -1,4 +1,5 @@
 ---
-- hosts: all
+- name: common
+  hosts: mongo_servers
   roles:
-    - mongo
+  - role: mongo
