@@ -34,10 +34,6 @@
 #  become: yes
 #  command: semanage port -a -t mongod_port_t -p tcp {{ mongod_port}}
 
-- name: Configure mongodb
-  become: yes
-  template: src=mongod.conf.j2 dest=/etc/mongod.conf owner=root group=root mode=0644
-
 - name: Confiure database directory
   become: yes
   file: state=directory path={{ mongodb_conf_dbpath }} owner={{mongodb_user}} group={{mongodb_user}} mode=0755
@@ -46,9 +42,15 @@
   become: yes
   file: state=directory path={{ mongodb_conf_logpath | dirname }} owner={{mongodb_user}} group={{mongodb_user}} mode=0755
 
+- name: Configure mongodb
+  become: yes
+  template: src=mongod.conf.j2 dest=/etc/mongod.conf owner=root group=root mode=0644
+  notify: mongodb restart
+
 #- name: start mongodb
 #  become: yes
 #  service: name={{ mongodb_daemon_name }} enabled=yes
+
 - name: Copy the keyfile for authentication
   become: yes
   copy: src=secret dest={{ mongodb_conf_dbpath }}/secret owner=mongod group=mongod mode=0400

@@ -1,0 +1,3 @@
+---
+- name: mongodb restart
+  service: name={{ mongodb_daemon_name }} state=restarted
