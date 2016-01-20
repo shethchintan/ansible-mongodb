@@ -26,6 +26,10 @@ processManagement:
 # network interfaces
 net:
   port: {{ mongod_port }}
+  http:
+    enabled: true
+    JSONPEnabled: true
+    RESTInterfaceEnabled: true
 # bindIp: 127.0.0.1  # Listen to local interface only, comment to listen on all interfaces.
 
 replication:

@@ -1,0 +1,6 @@
+---
+mongodb_datadir_prefix: /data/
+mongodb_daemon_name: mongod
+mongodb_user: mongo
+mongodb_conf_dbpath: /data/db
+mongodb_conf_logpath: /var/log/mongodb/{{ mongodb_daemon_name }}.log

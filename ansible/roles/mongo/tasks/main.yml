@@ -1,14 +1,18 @@
 ---
 - name: Ensure NTP (for time synchronization) is installed.
+  become: yes
   yum: name=ntp state=installed
 
 - name: Ensure NTP is running.
+  become: yes
   service: name=ntpd state=started enabled=yes
 
 - name: Create the hosts file for all machines
+  become: yes
   template: src=hosts.j2 dest=/etc/hosts
 
 - become: yes
+  become: yes
   group: name={{mongodb_user}} state=present
 
 - name: Ensure firewalld is stopped (since this is a test server).
@@ -45,7 +49,6 @@
 - name: Configure mongodb
   become: yes
   template: src=mongod.conf.j2 dest=/etc/mongod.conf owner=root group=root mode=0644
-  notify: mongodb restart
 
 #- name: start mongodb
 #  become: yes
@@ -65,4 +68,4 @@
 
 - name: Ensure mongodb is started
   become: yes
-  service: name={{ mongodb_daemon_name }} state=started
+  service: name=mongod state=started
