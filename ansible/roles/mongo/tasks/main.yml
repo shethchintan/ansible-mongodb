@@ -55,7 +55,7 @@
   become: yes
   copy: src=secret dest={{ mongodb_conf_dbpath }}/secret owner=mongod group=mongod mode=0400
 
-- name: Create the file to initialize the mongod ca set
+- name: Create the file to initialize the mongod replication set
   become: yes
   template: src=repset_init.j2 dest=/tmp/repset_init.js
 
